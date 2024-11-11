@@ -1,394 +1,319 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Decolonial Web Artifacts</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- Google Fonts for Elegant Typography -->
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
-    <style>
-        /* Global Styles */
-        :root {
-            --background-color: #f8f1e5; /* Light Beige */
-            --node-colors: #e0c097; /* Soft Beige for Nodes */
-            --node-hover-color: #d4a373; /* Slightly Darker on Hover */
-            --text-color: #2c3e50; /* Dark Text */
-            --header-footer-bg: #d7ccc8; /* Muted Beige */
-            --header-footer-text: #5d4037; /* Dark Brown */
-            --tooltip-bg: rgba(44, 62, 80, 0.9);
-            --tooltip-text: #ecf0f1;
-            --line-color: rgba(44, 62, 80, 0.5);
-            --font-family: 'Roboto', sans-serif;
-            --node-font-size: 14px;
-            --node-padding: 10px 15px;
-            --node-border-radius: 10px;
-            --node-box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            --node-transition: transform 0.3s, background-color 0.3s, box-shadow 0.3s;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Decolonial Web Artifacts</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    /* Global Styles */
+    :root {
+      --background-color: #f8f1e5;
+      --node-colors: #e0c097;
+      --node-hover-color: #d4a373;
+      --text-color: #2c3e50;
+      --header-footer-bg: #d7ccc8;
+      --header-footer-text: #5d4037;
+      --tooltip-bg: rgba(44, 62, 80, 0.9);
+      --tooltip-text: #ecf0f1;
+      --line-color: rgba(44, 62, 80, 0.5);
+      --font-family: 'Roboto', sans-serif;
+      --node-font-size: 14px;
+      --node-padding: 16px 20px;
+      --node-border-radius: 12px;
+      --node-box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+      --node-transition: transform 0.3s, background-color 0.3s, box-shadow 0.3s;
+    }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-        body {
-            font-family: var(--font-family);
-            background-color: var(--background-color);
-            color: var(--text-color);
-            overflow: hidden; /* Prevent scrollbars */
-            position: relative;
-            height: 100vh;
-        }
+    body {
+      font-family: var(--font-family);
+      background-color: var(--background-color);
+      color: var(--text-color);
+      overflow: hidden;
+      position: relative;
+      height: 100vh;
+    }
 
-        /* Header */
-        header {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            background-color: var(--header-footer-bg);
-            color: var(--header-footer-text);
-            text-align: center;
-            padding: 20px 10px;
-            z-index: 200;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
+    /* Header */
+    header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      background-color: var(--header-footer-bg);
+      color: var(--header-footer-text);
+      text-align: center;
+      padding: 24px 16px;
+      z-index: 200;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
 
-        header h1 {
-            margin-bottom: 10px;
-            font-size: 32px;
-            font-weight: 700;
-            letter-spacing: 1px;
-            color: #5d4037; /* Dark Brown */
-        }
+    header h1 {
+      margin-bottom: 12px;
+      font-size: 32px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      color: #5d4037;
+    }
 
-        header p {
-            font-size: 16px;
-            font-weight: 400;
-        }
+    header p {
+      font-size: 16px;
+      font-weight: 400;
+    }
 
-        /* Footer */
-        footer {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            background-color: var(--header-footer-bg);
-            color: var(--header-footer-text);
-            text-align: center;
-            padding: 15px 10px;
-            z-index: 200;
-            box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
-        }
+    /* Footer */
+    footer {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      background-color: var(--header-footer-bg);
+      color: var(--header-footer-text);
+      text-align: center;
+      padding: 18px 16px;
+      z-index: 200;
+      box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
+    }
 
-        footer p {
-            font-size: 14px;
-            font-weight: 400;
-        }
+    footer p {
+      font-size: 14px;
+      font-weight: 400;
+    }
 
-        /* Session ID Container */
-        #session-id-container {
-            position: fixed;
-            top: 80px; /* Below header */
-            left: 20px;
-            background: rgba(44, 62, 80, 0.7);
-            padding: 5px 10px;
-            border-radius: 5px;
-            color: #ecf0f1;
-            font-size: 12px;
-            z-index: 100;
-            opacity: 0.8;
-        }
+    /* Session ID Container */
+    #session-id-container {
+      position: fixed;
+      top: 72px;
+      left: 20px;
+      background: rgba(44, 62, 80, 0.7);
+      padding: 8px 12px;
+      border-radius: 6px;
+      color: #ecf0f1;
+      font-size: 12px;
+      z-index: 100;
+      opacity: 0.8;
+    }
 
-        /* Canvas Area */
-        #canvas {
-            width: 100%;
-            height: calc(100vh - 160px); /* Adjusted for header and footer */
-            position: relative;
-            margin-top: 80px; /* To prevent overlap with header */
-            overflow: hidden;
-        }
+    /* Canvas Area */
+    #canvas {
+      width: 100%;
+      height: calc(100vh - 160px);
+      position: relative;
+      margin-top: 80px;
+      overflow: hidden;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center;
+    }
 
-        /* Node Styles */
-        .node {
-            position: absolute;
-            background-color: var(--node-colors);
-            border-radius: var(--node-border-radius);
-            box-shadow: var(--node-box-shadow);
-            cursor: pointer;
-            transition: var(--node-transition);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #fff;
-            font-weight: 700;
-            padding: var(--node-padding);
-            text-align: center;
-            max-width: 200px;
-            word-wrap: break-word;
-        }
+    /* Node Styles */
+    .node {
+      background-color: var(--node-colors);
+      border-radius: var(--node-border-radius);
+      box-shadow: var(--node-box-shadow);
+      cursor: pointer;
+      transition: var(--node-transition);
+      color: #fff;
+      font-weight: 700;
+      padding: var(--node-padding);
+      text-align: center;
+      max-width: 200px;
+      word-wrap: break-word;
+      margin: 20px;
+    }
 
-        /* Color-Coded Nodes */
-        .node[data-index="0"] { background-color: #e0c097; }
-        .node[data-index="1"] { background-color: #c7d6e0; }
-        .node[data-index="2"] { background-color: #d4c7e0; }
-        .node[data-index="3"] { background-color: #e0d4c7; }
-        .node[data-index="4"] { background-color: #c7e0d6; }
-        .node[data-index="5"] { background-color: #e0c7d4; }
+    /* Color-Coded Nodes */
+    .node[data-index="0"] { background-color: #e0c7d4; }
+    .node[data-index="1"] { background-color: #c7d6e0; }
+    .node[data-index="2"] { background-color: #d4c7e0; }
+    .node[data-index="3"] { background-color: #e0d4c7; }
+    .node[data-index="4"] { background-color: #c7e0d6; }
+    .node[data-index="5"] { background-color: #e0c097; }
 
-        .node:hover {
-            transform: scale(1.05);
-            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
-        }
+    .node:hover {
+      transform: scale(1.05);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+    }
 
-        /* Tooltip */
-        .tooltip {
-            position: absolute;
-            background: var(--tooltip-bg);
-            color: var(--tooltip-text);
-            padding: 8px;
-            border-radius: 5px;
-            font-size: 12px;
-            pointer-events: none;
-            opacity: 0;
-            transition: opacity 0.3s;
-            z-index: 1000;
-            max-width: 220px;
-        }
+    /* Tooltip */
+    .tooltip {
+      position: absolute;
+      background: var(--tooltip-bg);
+      color: var(--tooltip-text);
+      padding: 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.3s;
+      z-index: 1000;
+      max-width: 220px;
+    }
 
-        .node:hover .tooltip {
-            opacity: 1;
-        }
+    .node:hover .tooltip {
+      opacity: 1;
+    }
 
-        /* Lines Between Nodes */
-        .line {
-            position: absolute;
-            width: 2px;
-            background-color: var(--line-color);
-            transform-origin: top left;
-            z-index: 50;
-            transition: all 0.3s ease;
-        }
+    /* Responsive Design */
+    @media (max-width: 767px) {
+      header {
+        padding: 18px 12px;
+      }
 
-        /* Responsive Design */
-        @media (max-width: 600px) {
-            header h1 {
-                font-size: 24px;
-            }
+      header h1 {
+        font-size: 24px;
+        margin-bottom: 8px;
+      }
 
-            header p {
-                font-size: 14px;
-            }
+      header p {
+        font-size: 14px;
+      }
 
-            .node {
-                width: 100px;
-                height: auto;
-                font-size: 12px;
-                padding: 8px 12px;
-            }
+      footer {
+        padding: 14px 12px;
+      }
 
-            #session-id-container {
-                top: 60px;
-                left: 10px;
-                font-size: 10px;
-            }
+      footer p {
+        font-size: 12px;
+      }
 
-            footer p {
-                font-size: 12px;
-            }
+      .node {
+        width: 100%;
+        max-width: none;
+        font-size: 14px;
+        padding: 16px 20px;
+        margin: 12px 0;
+      }
 
-            .tooltip {
-                font-size: 10px;
-                max-width: 180px;
-            }
-        }
-    </style>
+      .tooltip {
+        font-size: 10px;
+        max-width: 180px;
+      }
+
+      #session-id-container {
+        top: 64px;
+        left: 12px;
+        font-size: 10px;
+        padding: 6px 10px;
+      }
+
+      #canvas {
+        height: calc(100vh - 140px);
+        margin-top: 72px;
+        flex-direction: column;
+        align-items: stretch;
+      }
+    }
+  </style>
 </head>
 <body>
-    <!-- Header -->
-    <header>
-        <h1>Decolonial Web Artifacts</h1>
-        <p>Exploring decolonial approaches to science, technology, and knowledge production.</p>
-    </header>
+  <!-- Header -->
+  <header>
+    <h1>Decolonial Web Artifacts</h1>
+    <p>Exploring decolonial approaches to science, technology, and knowledge production.</p>
+  </header>
 
-    <!-- Session ID with Date and Time -->
-    <div id="session-id-container">
-        SID: <span id="session-id-text"></span>
-    </div>
+  <!-- Session ID with Date and Time -->
+  <div id="session-id-container">
+    SID: <span id="session-id-text"></span>
+  </div>
 
-    <!-- Canvas Area -->
-    <div id="canvas">
-        <!-- Nodes will be dynamically added here -->
-    </div>
+  <!-- Canvas Area -->
+  <div id="canvas">
+    <!-- Nodes will be dynamically added here -->
+  </div>
 
-    <!-- Footer -->
-    <footer>
-        <p>&copy; 2024 Decolonial Web Artifacts. All rights reserved.</p>
-    </footer>
+  <!-- Footer -->
+  <footer>
+    <p>&copy; 2024 Decolonial Web Artifacts. All rights reserved.</p>
+  </footer>
 
-    <script>
-        // Utility function to generate a unique session ID with date and time
-        function generateSessionID() {
-            const now = new Date();
-            const date = now.toISOString().slice(0,10); // YYYY-MM-DD
-            const time = now.toTimeString().slice(0,8); // HH:MM:SS
-            return 'SID-' + Math.random().toString(36).substr(2, 5).toUpperCase() + ' ' + date + ' ' + time;
-        }
+  <script>
+    // Utility function to generate a unique session ID with date and time
+    function generateSessionID() {
+      const now = new Date();
+      const date = now.toISOString().slice(0,10);
+      const time = now.toTimeString().slice(0,8);
+      return 'SID-' + Math.random().toString(36).substr(2, 5).toUpperCase() + ' ' + date + ' ' + time;
+    }
 
-        // Display session ID
-        const sessionID = generateSessionID();
-        document.getElementById('session-id-text').textContent = sessionID;
+    // Display session ID
+    const sessionID = generateSessionID();
+    document.getElementById('session-id-text').textContent = sessionID;
 
-        // Artifact Data
-        const artifacts = [
-            {
-                name: 'Fluidity Visualization',
-                description: 'Understand the dynamics of control and fluidity in decolonial science networks.',
-                link: 'fluidity_visualization.html'
-            },
-            {
-                name: 'Colonial STS Interactive',
-                description: 'Analyze colonial influences within Science and Technology Studies through interactive modules.',
-                link: 'colonial_sts_interactive.html'
-            },
-            {
-                name: 'Mavhunga\'s Framework',
-                description: 'Dive into Mavhunga\'s approach to decolonizing technology and knowledge systems.',
-                link: 'mavhungas_framework.html'
-            },
-            {
-                name: 'Bush Pump Explorer',
-                description: 'Discover the impact and history of the bush pump in decolonial contexts.',
-                link: 'bush_pump_explorer.html'
-            },
-            {
-                name: 'John Law\'s Control',
-                description: 'Examine John Law\'s theories on technological determinism and colonial control.',
-                link: 'john_laws_control.html'
-            },
-            {
-                name: 'Decolonial Fluid Analysis',
-                description: 'Interactively explore the dynamics of decolonial fluid analysis within STS networks.',
-                link: 'decolonial_fluid_analysis.html'
-            }
-        ];
+    // Artifact Data
+    const artifacts = [
+      {
+        name: 'Decolonial Fluid Analysis',
+        description: 'Interactively explore the dynamics of decolonial fluid analysis within STS networks.',
+        link: 'decolonial_fluid_analysis.html'
+      },
+      {
+        name: 'Fluidity Visualization',
+        description: 'Understand the dynamics of control and fluidity in decolonial science networks.',
+        link: 'fluidity_visualization.html'
+      },
+      {
+        name: 'Colonial STS Interactive',
+        description: 'Analyze colonial influences within Science and Technology Studies through interactive modules.',
+        link: 'colonial_sts_interactive.html'
+      },
+      {
+        name: 'Mavhunga\'s Framework',
+        description: 'Dive into Mavhunga\'s approach to decolonizing technology and knowledge systems.',
+        link: 'mavhungas_framework.html'
+      },
+      {
+        name: 'Bush Pump Explorer',
+        description: 'Discover the impact and history of the bush pump in decolonial contexts.',
+        link: 'bush_pump_explorer.html'
+      },
+      {
+        name: 'John Law\'s Control',
+        description: 'Examine John Law\'s theories on technological determinism and colonial control.',
+        link: 'john_laws_control.html'
+      }
+    ];
 
-        const canvas = document.getElementById('canvas');
+    const canvas = document.getElementById('canvas');
 
-        // Function to create nodes
-        function createNode(x, y, artifact, index) {
-            const node = document.createElement('div');
-            node.classList.add('node');
-            node.style.left = `${x}px`;
-            node.style.top = `${y}px`;
-            node.setAttribute('data-index', index);
-            node.textContent = artifact.name;
+    // Function to create nodes
+    function createNode(artifact, index) {
+      const node = document.createElement('div');
+      node.classList.add('node');
+      node.setAttribute('data-index', index);
+      node.textContent = artifact.name;
 
-            // Click Event to navigate
-            node.addEventListener('click', () => {
-                window.location.href = artifact.link;
-            });
+      // Click Event to navigate
+      node.addEventListener('click', () => {
+        window.location.href = artifact.link;
+      });
 
-            // Tooltip
-            const tooltip = document.createElement('div');
-            tooltip.classList.add('tooltip');
-            tooltip.textContent = artifact.description;
-            node.appendChild(tooltip);
+      // Tooltip
+      const tooltip = document.createElement('div');
+      tooltip.classList.add('tooltip');
+      tooltip.textContent = artifact.description;
+      node.appendChild(tooltip);
 
-            canvas.appendChild(node);
-        }
+      canvas.appendChild(node);
+    }
 
-        // Function to initialize nodes in a network-like pattern
-        function initializeNodes() {
-            const centerX = canvas.offsetWidth / 2;
-            const centerY = canvas.offsetHeight / 2;
-            const radius = Math.min(centerX, centerY) - 150; // To keep nodes within view
+    // Function to initialize nodes
+    function initializeNodes() {
+      artifacts.forEach((artifact, index) => {
+        createNode(artifact, index);
+      });
+    }
 
-            artifacts.forEach((artifact, index) => {
-                const angle = (index / artifacts.length) * 2 * Math.PI;
-                const x = centerX + radius * Math.cos(angle) - (getTextWidth(artifact.name, 'bold 14px Roboto') / 2);
-                const y = centerY + radius * Math.sin(angle) - 40; // 40 is half of node height (80px)
-                createNode(x, y, artifact, index);
-            });
-
-            // Connect Nodes with Lines
-            connectNodes();
-        }
-
-        // Function to connect nodes with lines
-        function connectNodes() {
-            const nodes = document.querySelectorAll('.node');
-            const nodeArray = Array.from(nodes);
-
-            // Simple connections: connect each node to its next node to form a circle
-            nodeArray.forEach((node, index) => {
-                const nextNode = nodeArray[(index + 1) % nodeArray.length];
-                const line = document.createElement('div');
-                line.classList.add('line');
-
-                // Calculate position and angle
-                const rect1 = node.getBoundingClientRect();
-                const rect2 = nextNode.getBoundingClientRect();
-
-                const canvasRect = canvas.getBoundingClientRect();
-
-                const x1 = rect1.left + rect1.width / 2 - canvasRect.left;
-                const y1 = rect1.top + rect1.height / 2 - canvasRect.top;
-                const x2 = rect2.left + rect2.width / 2 - canvasRect.left;
-                const y2 = rect2.top + rect2.height / 2 - canvasRect.top;
-
-                const length = Math.hypot(x2 - x1, y2 - y1);
-                const angle = Math.atan2(y2 - y1, x2 - x1) * 180 / Math.PI;
-
-                line.style.width = `${length}px`;
-                line.style.left = `${x1}px`;
-                line.style.top = `${y1}px`;
-                line.style.transform = `rotate(${angle}deg)`;
-
-                canvas.appendChild(line);
-            });
-        }
-
-        // Function to get text width for centering
-        function getTextWidth(text, font) {
-            const canvasElem = document.createElement('canvas');
-            const context = canvasElem.getContext('2d');
-            context.font = font;
-            const metrics = context.measureText(text);
-            return metrics.width;
-        }
-
-        // Initialize nodes on window load
-        window.onload = initializeNodes;
-
-        // Handle window resize to reposition lines
-        window.onresize = () => {
-            // Remove existing lines
-            const lines = document.querySelectorAll('.line');
-            lines.forEach(line => line.remove());
-
-            // Reinitialize nodes to recalculate positions
-            const nodes = document.querySelectorAll('.node');
-            nodes.forEach(node => {
-                const index = parseInt(node.getAttribute('data-index'));
-                const artifact = artifacts[index];
-                node.remove(); // Remove old node
-                // Recreate node
-                const initials = artifact.name.split(' ').map(word => word[0]).join('').toUpperCase();
-                // Calculate new position
-                const angle = (index / artifacts.length) * 2 * Math.PI;
-                const centerX = canvas.offsetWidth / 2;
-                const centerY = canvas.offsetHeight / 2;
-                const radius = Math.min(centerX, centerY) - 150;
-                const x = centerX + radius * Math.cos(angle) - (getTextWidth(artifact.name, 'bold 14px Roboto') / 2);
-                const y = centerY + radius * Math.sin(angle) - 40;
-                createNode(x, y, artifact, index);
-            });
-
-            // Reconnect nodes
-            connectNodes();
-        };
-    </script>
+    // Initialize nodes on window load
+    window.onload = initializeNodes;
+  </script>
 </body>
 </html>
