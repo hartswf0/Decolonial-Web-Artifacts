@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        .container {
+            width: 100%;
+            height: 600px;
+            background: #1a1a1a;
+            position: relative;
+            overflow: hidden;
+            font-family: system-ui, sans-serif;
+            color: white;
+        }
+
+        .knowledge-system {
+            position: absolute;
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.5s ease;
+            text-align: center;
+            padding: 10px;
+            font-size: 14px;
+        }
+
+        .connection {
+            position: absolute;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.2);
+            transform-origin: left center;
+            pointer-events: none;
+            transition: all 0.5s ease;
+        }
+
+        .info-panel {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            border-radius: 8px;
+            width: 80%;
+            max-width: 600px;
+            font-size: 14px;
+        }
+
+        .mode-toggle {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+        }
+
+        .mode-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .mode-btn.active {
+            background: #4a90e2;
+        }
+
+        .chimurenga-overlay {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.8) 100%);
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="mode-toggle">
+            <button class="mode-btn active" data-mode="indigenous">Indigenous Knowledge</button>
+            <button class="mode-btn" data-mode="colonial">Colonial Science</button>
+            <button class="mode-btn" data-mode="decolonial">Decolonial Tech</button>
+        </div>
+        <div class="chimurenga-overlay"></div>
+        <div class="info-panel">
+            Explore different perspectives on technology and knowledge systems in Zimbabwe
+        </div>
+    </div>
+
+    <script>
+        const container = document.querySelector('.container');
+        const infoPanel = document.querySelector('.info-panel');
+        const overlay = document.querySelector('.chimurenga-overlay');
+
+        const systems = [
+            {
+                id: 'communal',
+                label: 'Communal Knowledge',
+                color: '#4a90e2',
+                basePos: { x: 50, y: 30 },
+                positions: {
+                    indigenous: { x: 50, y: 30 },
+                    colonial: { x: 20, y: 70 },
+                    decolonial: { x: 50, y: 30 }
+                },
+                info: {
+                    indigenous: 'Traditional water management and community practices',
+                    colonial: 'Marginalized indigenous knowledge systems',
+                    decolonial: 'Revitalized communal wisdom in technology'
+                }
+            },
+            {
+                id: 'chimurenga',
+                label: 'Chimurenga Spirit',
+                color: '#e24a4a',
+                basePos: { x: 30, y: 50 },
+                positions: {
+                    indigenous: { x: 30, y: 50 },
+                    colonial: { x: 80, y: 20 },
+                    decolonial: { x: 40, y: 40 }
+                },
+                info: {
+                    indigenous: 'Traditional resistance and cultural continuity',
+                    colonial: 'Struggle against technological imperialism',
+                    decolonial: 'Driving force for technological sovereignty'
+                }
+            },
+            {
+                id: 'technology',
+                label: 'Technology Systems',
+                color: '#4ae24a',
+                basePos: { x: 70, y: 50 },
+                positions: {
+                    indigenous: { x: 70, y: 50 },
+                    colonial: { x: 50, y: 40 },
+                    decolonial: { x: 60, y: 60 }
+                },
+                info: {
+                    indigenous: 'Locally adapted solutions and innovations',
+                    colonial: 'Western technological dominance',
+                    decolonial: 'Hybrid technologies serving local needs'
+                }
+            }
+        ];
+
+        let currentMode = 'indigenous';
+        let activeSystem = null;
+        const systemElements = new Map();
+        const connections = [];
+
+        // Create knowledge systems
+        systems.forEach(system => {
+            const element = document.createElement('div');
+            element.className = 'knowledge-system';
+            element.innerHTML = system.label;
+            element.style.backgroundColor = system.color;
+            element.style.left = `${system.basePos.x}%`;
+            element.style.top = `${system.basePos.y}%`;
+            
+            element.addEventListener('click', () => highlightSystem(system));
+            
+            container.appendChild(element);
+            systemElements.set(system.id, element);
+        });
+
+        // Create connections
+        function createConnections() {
+            connections.forEach(conn => conn.remove());
+            connections.length = 0;
+
+            systems.forEach((sys1, i) => {
+                systems.forEach((sys2, j) => {
+                    if (i < j) {
+                        const connection = document.createElement('div');
+                        connection.className = 'connection';
+                        container.appendChild(connection);
+                        connections.push(connection);
+                        updateConnection(connection, systemElements.get(sys1.id), systemElements.get(sys2.id));
+                    }
+                });
+            });
+        }
+
+        function updateConnection(connection, elem1, elem2) {
+            const rect1 = elem1.getBoundingClientRect();
+            const rect2 = elem2.getBoundingClientRect();
+            
+            const x1 = rect1.left + rect1.width / 2;
+            const y1 = rect1.top + rect1.height / 2;
+            const x2 = rect2.left + rect2.width / 2;
+            const y2 = rect2.top + rect2.height / 2;
+            
+            const length = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+            const angle = Math.atan2(y2 - y1, x2 - x1) * 180 / Math.PI;
+            
+            connection.style.width = `${length}px`;
+            connection.style.left = `${x1}px`;
+            connection.style.top = `${y1}px`;
+            connection.style.transform = `rotate(${angle}deg)`;
+        }
+
+        function highlightSystem(system) {
+            if (activeSystem === system.id) {
+                activeSystem = null;
+                systemElements.forEach(elem => {
+                    elem.style.transform = 'scale(1)';
+                    elem.style.opacity = '1';
+                });
+                infoPanel.textContent = 'Explore different perspectives on technology and knowledge systems in Zimbabwe';
+                overlay.style.opacity = '0';
+            } else {
+                activeSystem = system.id;
+                systemElements.forEach(elem => {
+                    elem.style.transform = 'scale(0.8)';
+                    elem.style.opacity = '0.5';
+                });
+                const activeElem = systemElements.get(system.id);
+                activeElem.style.transform = 'scale(1.2)';
+                activeElem.style.opacity = '1';
+                infoPanel.textContent = system.info[currentMode];
+                
+                if (system.id === 'chimurenga') {
+                    overlay.style.opacity = '0.5';
+                } else {
+                    overlay.style.opacity = '0';
+                }
+            }
+        }
+
+        // Mode switching
+        document.querySelectorAll('.mode-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentMode = btn.dataset.mode;
+                
+                systems.forEach(system => {
+                    const elem = systemElements.get(system.id);
+                    const pos = system.positions[currentMode];
+                    elem.style.left = `${pos.x}%`;
+                    elem.style.top = `${pos.y}%`;
+                });
+                
+                if (activeSystem) {
+                    const system = systems.find(s => s.id === activeSystem);
+                    infoPanel.textContent = system.info[currentMode];
+                }
+                
+                createConnections();
+            });
+        });
+
+        // Initial connection creation
+        createConnections();
+
+        // Update connections on window resize
+        window.addEventListener('resize', () => createConnections());
+    </script>
+</body>
+</html>

@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Knowledge Farming Simulator</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        /* Global Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: #1A1A1A;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        /* Game Container */
+        #gameContainer {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(to top, #87CEFA, #1A1A1A);
+            overflow: hidden;
+        }
+
+        /* Canvas for Animations */
+        #gameCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        /* Field of Knowledge */
+        .field {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 300px;
+            background: #228B22;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 20px;
+            padding: 20px;
+            z-index: 2;
+        }
+
+        .knowledge-node {
+            width: 80px;
+            height: 80px;
+            background: #2E8B57;
+            border-radius: 50%;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            transition: transform 0.3s, background 0.3s;
+            cursor: pointer;
+        }
+
+        .knowledge-node:hover {
+            transform: scale(1.05);
+            background: #3CB371;
+        }
+
+        .knowledge-node::after {
+            content: attr(data-emoji);
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.5em;
+        }
+
+        /* Plants */
+        .plant {
+            position: absolute;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%) scaleY(0);
+            transform-origin: bottom;
+            width: 60px;
+            height: 120px;
+            background-size: contain;
+            background-repeat: no-repeat;
+            animation: grow 2s forwards;
+            z-index: 2;
+        }
+
+        @keyframes grow {
+            to {
+                transform: translateX(-50%) scaleY(1);
+            }
+        }
+
+        /* Leaves with Facts */
+        .leaf {
+            position: absolute;
+            background: rgba(34, 139, 34, 0.8);
+            width: 10px;
+            height: 30px;
+            bottom: 0;
+            left: 50%;
+            transform-origin: bottom;
+            animation: leafGrow 2s forwards;
+            cursor: pointer;
+        }
+
+        @keyframes leafGrow {
+            to {
+                height: 60px;
+            }
+        }
+
+        .leaf:hover::after {
+            content: attr(data-fact);
+            position: absolute;
+            top: -80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: #fff;
+            padding: 8px;
+            border-radius: 4px;
+            width: 220px;
+            text-align: center;
+            font-size: 14px;
+            z-index: 1000;
+        }
+
+        /* Reservoir */
+        .reservoir {
+            position: absolute;
+            bottom: 320px;
+            left: 70%;
+            transform: translateX(-50%);
+            width: 150px;
+            height: 100px;
+            background: #4682B4;
+            border: 4px solid #2F4F4F;
+            border-radius: 0 0 50% 50%;
+            overflow: hidden;
+            z-index: 2;
+        }
+
+        .water-level {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 0%;
+            background: #00BFFF;
+            transition: height 0.2s;
+        }
+
+        /* Pump */
+        .pump {
+            position: absolute;
+            bottom: 320px;
+            left: 30%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 150px;
+            background: #8B4513;
+            border-radius: 10px;
+            box-shadow: inset -4px -4px 8px rgba(255,255,255,0.2),
+                        inset 4px 4px 8px rgba(0,0,0,0.2),
+                        0 8px 16px rgba(0,0,0,0.4);
+            cursor: pointer;
+            transition: transform 0.2s;
+            z-index: 2;
+        }
+
+        .pump:active {
+            transform: scale(0.95);
+        }
+
+        /* Human Pumping */
+        .human {
+            position: absolute;
+            bottom: 320px;
+            left: 30%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 150px;
+            background: url('https://i.imgur.com/6eZzBvF.png') no-repeat center;
+            background-size: contain;
+            animation: pumpAnimation 1s infinite;
+            z-index: 3;
+            pointer-events: none;
+            display: none;
+        }
+
+        @keyframes pumpAnimation {
+            0% { background-position-y: 0%; }
+            50% { background-position-y: 100%; }
+            100% { background-position-y: 0%; }
+        }
+
+        /* HUD */
+        .hud {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: #FFFFFF;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 18px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            z-index: 2;
+        }
+
+        /* Tooltip */
+        .tooltip {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.7);
+            color: #fff;
+            padding: 6px 10px;
+            border-radius: 4px;
+            font-size: 14px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s;
+            z-index: 1000;
+        }
+
+        /* Status Icons */
+        .status-icon {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            width: 20px;
+            height: 20px;
+            background-size: contain;
+            background-repeat: no-repeat;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <!-- HUD -->
+        <div class="hud">
+            Water Units: <span id="waterLevel">0</span> |
+            Day: <span id="dayCounter">1</span>
+        </div>
+        <!-- Pump -->
+        <div class="pump" id="pump"></div>
+        <!-- Human Pumping -->
+        <div class="human" id="human"></div>
+        <!-- Reservoir -->
+        <div class="reservoir" id="reservoir">
+            <div class="water-level" id="reservoirWaterLevel"></div>
+        </div>
+        <!-- Canvas for Animations -->
+        <canvas id="gameCanvas"></canvas>
+        <!-- Knowledge Nodes Field -->
+        <div class="field" id="field"></div>
+        <!-- Tooltip -->
+        <div class="tooltip" id="tooltip"></div>
+    </div>
+
+    <script>
+        // Game Variables
+        const pump = document.getElementById('pump');
+        const human = document.getElementById('human');
+        const waterLevelDisplay = document.getElementById('waterLevel');
+        const dayCounterDisplay = document.getElementById('dayCounter');
+        const field = document.getElementById('field');
+        const tooltip = document.getElementById('tooltip');
+        const reservoir = document.getElementById('reservoir');
+        const reservoirWaterLevel = document.getElementById('reservoirWaterLevel');
+        let waterLevel = 0;
+        let isPumping = false;
+        let knowledgeNodes = [];
+        let day = 1;
+        const maxWaterLevel = 10;
+
+        // Canvas Setup
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        resizeCanvas();
+
+        window.addEventListener('resize', resizeCanvas);
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+
+        // Particle System for Water Flow
+        let particles = [];
+
+        class Particle {
+            constructor(x, y, targetX, targetY, color = '#00BFFF') {
+                this.x = x;
+                this.y = y;
+                this.size = Math.random() * 3 + 2;
+                this.speedX = (targetX - x) / 50 + (Math.random() - 0.5) * 2;
+                this.speedY = (targetY - y) / 50 + (Math.random() - 0.5) * 2;
+                this.alpha = 1;
+                this.color = color;
+            }
+
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+                this.alpha -= 0.02;
+                if (this.alpha <= 0) {
+                    this.alpha = 0;
+                }
+            }
+
+            draw() {
+                ctx.globalAlpha = this.alpha;
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.globalAlpha = 1;
+            }
+        }
+
+        function handleParticles() {
+            for (let i = 0; i < particles.length; i++) {
+                particles[i].update();
+                particles[i].draw();
+                if (particles[i].alpha === 0) {
+                    particles.splice(i, 1);
+                    i--;
+                }
+            }
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            handleParticles();
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+
+        // Plant Images
+        const plantImages = {
+            grass: 'https://cdn.glitch.global/fee3acd2-4342-4cb7-875d-f21e56b83b86/grass.png?v=1731302921586',
+            wheat: 'https://cdn.glitch.global/fee3acd2-4342-4cb7-875d-f21e56b83b86/wheat.png?v=1731302933934',
+            corn: 'https://cdn.glitch.global/fee3acd2-4342-4cb7-875d-f21e56b83b86/corn.png?v=1731302973612'
+        };
+
+        // Status Icons (Protected)
+        const statusIcons = {
+            protected: 'https://cdn.glitch.global/fee3acd2-4342-4cb7-875d-f21e56b83b86/shield.png?v=1731303000000' // Replace with shield icon URL
+        };
+
+        // Knowledge Nodes Data with Dynamics
+        const knowledgeData = [
+            {
+                emoji: '📚',
+                watered: false,
+                protected: false,
+                health: 3,
+                info: 'Books represent knowledge accumulated over time.',
+                plantType: 'grass',
+                facts: [
+                    'Emphasis on communal knowledge systems within indigenous communities of Zimbabwe.',
+                    'Understanding and valuing indigenous knowledge in development contexts.',
+                    'Critique of development models that prioritize Western technology over local knowledge.'
+                ]
+            },
+            {
+                emoji: '💡',
+                watered: false,
+                protected: true, // Protected by "powerful elite"
+                health: 3,
+                info: 'Ideas light up our understanding.',
+                plantType: 'wheat',
+                facts: [
+                    'Decolonizing technology by moving away from Western-centric models.',
+                    'Embracing indigenous knowledge systems and practices.',
+                    'Reimagining technology to serve local community needs.'
+                ]
+            },
+            {
+                emoji: '🧠',
+                watered: false,
+                protected: false,
+                health: 3,
+                info: 'The brain is the powerhouse of cognition.',
+                plantType: 'corn',
+                facts: [
+                    'Science as a tool of empire used to justify colonialism.',
+                    'Examining how scientific knowledge reinforces cultural hierarchies.',
+                    'Critiques of historical roles of science in power imbalances.'
+                ]
+            },
+            {
+                emoji: '🌟',
+                watered: false,
+                protected: false,
+                health: 3,
+                info: 'Stars symbolize excellence and aspiration.',
+                plantType: 'grass',
+                facts: [
+                    'Alternative modernities beyond Eurocentric perspectives.',
+                    'Recognizing diverse ways societies engage with technology.',
+                    'Challenges to the notion of a singular modernity.'
+                ]
+            },
+            {
+                emoji: '🎓',
+                watered: false,
+                protected: true,
+                health: 3,
+                info: 'Education is the key to unlocking potential.',
+                plantType: 'wheat',
+                facts: [
+                    'Integration of indigenous knowledge in education systems.',
+                    'Empowerment through localized curriculum and pedagogy.',
+                    'Critiques of educational structures rooted in colonial legacies.'
+                ]
+            },
+            {
+                emoji: '🔬',
+                watered: false,
+                protected: false,
+                health: 3,
+                info: 'Science allows us to explore the unknown.',
+                plantType: 'corn',
+                facts: [
+                    'Interrogating the role of technology in post-colonial contexts.',
+                    'Understanding technology as socially and culturally constructed.',
+                    'The impact of technology on power structures and inequalities.'
+                ]
+            },
+        ];
+
+        // Create Knowledge Nodes
+        function createKnowledgeNodes() {
+            knowledgeData.forEach((data, index) => {
+                const node = document.createElement('div');
+                node.classList.add('knowledge-node');
+                node.setAttribute('data-emoji', data.emoji);
+                node.dataset.index = index;
+
+                // Status Icon for Protected Nodes
+                if (data.protected) {
+                    const statusIcon = document.createElement('div');
+                    statusIcon.classList.add('status-icon');
+                    statusIcon.style.backgroundImage = `url(${statusIcons.protected})`;
+                    node.appendChild(statusIcon);
+                }
+
+                // Click Event to Irrigate
+                node.addEventListener('click', () => {
+                    if (waterLevel > 0 && !data.watered) {
+                        waterLevel--;
+                        updateWaterLevel();
+                        data.watered = true;
+                        data.health = 3; // Reset health when watered
+                        node.style.display = 'none';
+                        growPlant(node, data);
+                        createParticleEffect(reservoir, node, '#00FF7F');
+                    } else if (data.watered) {
+                        showTooltip(node, 'Already irrigated!');
+                    } else {
+                        showTooltip(node, 'Not enough water!');
+                    }
+                });
+
+                // Hover Events for Tooltip
+                node.addEventListener('mousemove', (e) => {
+                    if (!data.watered) {
+                        showTooltip(node, 'Click to irrigate');
+                    }
+                });
+
+                node.addEventListener('mouseleave', () => {
+                    hideTooltip();
+                });
+
+                field.appendChild(node);
+                knowledgeNodes.push(data);
+            });
+        }
+
+        createKnowledgeNodes();
+
+        // Grow Plant Function
+        function growPlant(node, data) {
+            const plant = document.createElement('div');
+            plant.classList.add('plant');
+            plant.style.left = node.style.left;
+            plant.style.backgroundImage = `url(${plantImages[data.plantType]})`;
+            node.parentNode.appendChild(plant);
+            data.plantElement = plant;
+
+            // Add leaves with facts
+            data.facts.forEach((fact, i) => {
+                const leaf = document.createElement('div');
+                leaf.classList.add('leaf');
+                leaf.style.left = `${50 + i * 20}px`;
+                leaf.style.bottom = `${50 + i * 20}px`;
+                leaf.setAttribute('data-fact', fact);
+                plant.appendChild(leaf);
+            });
+
+            // Start Plant Lifecycle
+            startPlantLifecycle(data);
+        }
+
+        // Pump Interaction
+        pump.addEventListener('mousedown', () => {
+            if (waterLevel < maxWaterLevel) {
+                isPumping = true;
+                human.style.display = 'block';
+                pumpWater();
+            }
+        });
+
+        document.addEventListener('mouseup', () => {
+            isPumping = false;
+            human.style.display = 'none';
+        });
+
+        function pumpWater() {
+            if (isPumping && waterLevel < maxWaterLevel) {
+                waterLevel++;
+                updateWaterLevel();
+                createParticleEffect(human, reservoir, '#1E90FF');
+                setTimeout(() => {
+                    if (isPumping && waterLevel < maxWaterLevel) {
+                        pumpWater();
+                    }
+                }, 200);
+            }
+        }
+
+        function updateWaterLevel() {
+            waterLevelDisplay.textContent = waterLevel;
+            let waterPercentage = Math.min((waterLevel / maxWaterLevel) * 100, 100);
+            reservoirWaterLevel.style.height = `${waterPercentage}%`;
+        }
+
+        // Particle Effect from source to target
+        function createParticleEffect(sourceElement, targetElement, color) {
+            const sourceRect = sourceElement.getBoundingClientRect();
+            const targetRect = targetElement.getBoundingClientRect();
+            const sourceX = sourceRect.left + sourceRect.width / 2;
+            const sourceY = sourceRect.top + sourceRect.height / 2;
+            const targetX = targetRect.left + targetRect.width / 2;
+            const targetY = targetRect.top + targetRect.height / 2;
+
+            for (let i = 0; i < 20; i++) {
+                particles.push(new Particle(sourceX, sourceY, targetX, targetY, color));
+            }
+        }
+
+        // Tooltip Functions
+        function showTooltip(element, message) {
+            tooltip.textContent = message;
+            tooltip.style.left = `${event.clientX}px`;
+            tooltip.style.top = `${event.clientY - 30}px`;
+            tooltip.style.opacity = 1;
+        }
+
+        function hideTooltip() {
+            tooltip.style.opacity = 0;
+        }
+
+        // Plant Lifecycle with Pests and Protection
+        function startPlantLifecycle(data) {
+            // Each day, decrease health if not watered
+            // Handle pest attacks
+            setInterval(() => {
+                day++;
+                dayCounterDisplay.textContent = day;
+
+                knowledgeNodes.forEach(nodeData => {
+                    if (nodeData.watered && nodeData.plantElement) {
+                        // Decrease health each day
+                        nodeData.health--;
+                        if (nodeData.health <= 0) {
+                            // Plant dies
+                            nodeData.plantElement.style.opacity = 0.5;
+                            showTooltip(nodeData.plantElement, 'Plant has withered!');
+                        }
+
+                        // Random Pest Attack
+                        if (Math.random() < 0.2 && !nodeData.protected && nodeData.health > 0) {
+                            nodeData.health--;
+                            showTooltip(nodeData.plantElement, 'Pest attack!');
+                            if (nodeData.health <= 0) {
+                                nodeData.plantElement.style.opacity = 0.5;
+                                showTooltip(nodeData.plantElement, 'Plant has died!');
+                            }
+                        }
+                    }
+                });
+
+                // Limit water capacity
+                if (waterLevel > maxWaterLevel) {
+                    waterLevel = maxWaterLevel;
+                    updateWaterLevel();
+                }
+
+            }, 30000); // Advance day every 30 seconds
+        }
+
+        // Preload Plant and Status Icons
+        function preloadImages() {
+            for (let key in plantImages) {
+                const img = new Image();
+                img.src = plantImages[key];
+            }
+            for (let key in statusIcons) {
+                const img = new Image();
+                img.src = statusIcons[key];
+            }
+        }
+
+        preloadImages();
+    </script>
+</body>
+</html>

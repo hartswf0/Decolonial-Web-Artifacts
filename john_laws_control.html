@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Space Pirate Captain Console</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        /* ===========================
+           Global Styles
+        =========================== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #000; /* Black background for space feel */
+            color: #00FF00; /* Green text for retro console feel */
+            font-family: 'Courier New', Courier, monospace;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        /* ===========================
+           Console Container
+        =========================== */
+        #console-container {
+            width: 80%;
+            height: 80%;
+            background-color: #000;
+            border: 2px solid #00FF00;
+            padding: 20px;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        /* ===========================
+           Console Output
+        =========================== */
+        #console-output {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        /* ===========================
+           Command Input
+        =========================== */
+        #command-input {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            width: calc(100% - 40px);
+            display: flex;
+        }
+
+        #command-input input {
+            flex: 1;
+            padding: 10px;
+            background-color: #000;
+            border: 1px solid #00FF00;
+            color: #00FF00;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 16px;
+        }
+
+        #command-input button {
+            padding: 10px 20px;
+            background-color: #00FF00;
+            border: none;
+            color: #000;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        #command-input button:hover {
+            background-color: #ADFF2F;
+        }
+
+        /* ===========================
+           Retro Styling
+        =========================== */
+        ::selection {
+            background: #ADFF2F;
+            color: #000;
+        }
+
+        /* ===========================
+           Scrollbar Styling
+        =========================== */
+        #console-container::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        #console-container::-webkit-scrollbar-track {
+            background: #333;
+        }
+
+        #console-container::-webkit-scrollbar-thumb {
+            background-color: #00FF00;
+            border-radius: 10px;
+            border: 2px solid #333;
+        }
+    </style>
+</head>
+<body>
+    <!-- Console Container -->
+    <div id="console-container">
+        <!-- Console Output -->
+        <div id="console-output"></div>
+
+        <!-- Command Input -->
+        <div id="command-input">
+            <input type="text" id="user-command" placeholder="Enter command here...">
+            <button id="send-command">Send</button>
+        </div>
+    </div>
+
+    <!-- JavaScript for Game Logic -->
+    <script>
+        // ===========================
+        // Game State Variables
+        // ===========================
+        const gameState = {
+            gold: 1000,
+            knowledge: 0,
+            ammunition: 100,
+            ideology: 0, // Represents Ideological Influence in %
+            guides: 0, // Number of local guides
+            obstacles: [], // Active obstacles
+            commands: ['navigate', 'acquire guide', 'status', 'fire', 'customize'],
+            ship: {
+                customizations: {
+                    sails: false,
+                    hull: false,
+                    cannons: false
+                }
+            }
+        };
+
+        // ===========================
+        // DOM Elements
+        // ===========================
+        const consoleOutput = document.getElementById('console-output');
+        const userCommandInput = document.getElementById('user-command');
+        const sendCommandButton = document.getElementById('send-command');
+
+        // ===========================
+        // Utility Functions
+        // ===========================
+
+        // Function to append messages to console
+        function log(message) {
+            consoleOutput.innerHTML += message + '\n';
+            consoleOutput.scrollTop = consoleOutput.scrollHeight;
+        }
+
+        // Function to process user commands
+        function processCommand(command) {
+            const args = command.toLowerCase().split(' ');
+            const mainCommand = args[0];
+
+            switch(mainCommand) {
+                case 'navigate':
+                    navigate();
+                    break;
+                case 'acquire':
+                    if(args[1] === 'guide') {
+                        acquireGuide();
+                    } else {
+                        log('Unknown command. Did you mean "acquire guide"?');
+                    }
+                    break;
+                case 'status':
+                    showStatus();
+                    break;
+                case 'fire':
+                    fireCannon();
+                    break;
+                case 'customize':
+                    customizeShip();
+                    break;
+                case 'help':
+                    showHelp();
+                    break;
+                default:
+                    log('Unknown command. Type "help" for a list of commands.');
+            }
+        }
+
+        // Function to show help
+        function showHelp() {
+            log('Available Commands:\n- navigate\n- acquire guide\n- status\n- fire\n- customize\n- help');
+        }
+
+        // Function to show status
+        function showStatus() {
+            log(`Status:
+🪙 Gold: ${gameState.gold}
+📚 Knowledge XP: ${gameState.knowledge}
+🔫 Ammunition: ${gameState.ammunition}
+🧠 Ideological Influence: ${gameState.ideology}%
+🧭 Local Guides: ${gameState.guides}`);
+        }
+
+        // Function to acquire a local guide
+        function acquireGuide() {
+            if(gameState.gold >= 500) {
+                gameState.gold -= 500;
+                gameState.guides += 1;
+                gameState.knowledge += 50;
+                gameState.ideology += 10;
+                log('You have successfully acquired a local guide. Navigation is now safer and more efficient.');
+                showStatus();
+            } else {
+                log('Insufficient gold to acquire a local guide.');
+            }
+        }
+
+        // Function to navigate
+        function navigate() {
+            log('Initiating navigation sequence...');
+            // Simulate navigation delay
+            setTimeout(() => {
+                log('Calculating optimal route...');
+                // Determine if there are unseen obstacles
+                if(gameState.guides > 0) {
+                    // Guides help reveal obstacles
+                    const obstacleChance = 0.3; // 30% chance to encounter an obstacle
+                    if(Math.random() < obstacleChance) {
+                        generateObstacle();
+                    } else {
+                        log('Navigation successful. The voyage continues smoothly.');
+                        gameState.knowledge += 20;
+                        gameState.ideology += 5;
+                        showStatus();
+                    }
+                } else {
+                    // Without guides, higher chance of obstacles
+                    const obstacleChance = 0.6; // 60% chance to encounter an obstacle
+                    if(Math.random() < obstacleChance) {
+                        generateObstacle();
+                    } else {
+                        log('Navigation successful. The voyage continues smoothly.');
+                        gameState.knowledge += 10;
+                        gameState.ideology += 3;
+                        showStatus();
+                    }
+                }
+            }, 2000);
+        }
+
+        // Function to generate an obstacle
+        function generateObstacle() {
+            const obstacleTypes = ['Asteroid Field', 'Black Hole', 'Nebula Storm'];
+            const obstacleEmojis = {
+                'Asteroid Field': '☄️',
+                'Black Hole': '🕳️',
+                'Nebula Storm': '🌌'
+            };
+            const randomType = obstacleTypes[Math.floor(Math.random() * obstacleTypes.length)];
+            const obstacle = {
+                type: randomType,
+                emoji: obstacleEmojis[randomType],
+                resolved: false
+            };
+            gameState.obstacles.push(obstacle);
+            log(`⚠️ Unseen Obstacle Detected: ${randomType} ${obstacle.emoji}`);
+            log('Attempting to resolve the obstacle...');
+            setTimeout(() => {
+                if(gameState.guides > 0) {
+                    resolveObstacle(obstacle);
+                } else {
+                    sufferObstacle(obstacle);
+                }
+            }, 2000);
+        }
+
+        // Function to resolve an obstacle
+        function resolveObstacle(obstacle) {
+            log(`✅ Obstacle Resolved: ${obstacle.type} ${obstacle.emoji}`);
+            gameState.knowledge += 30;
+            gameState.ideology += 5;
+            showStatus();
+        }
+
+        // Function to suffer from an obstacle
+        function sufferObstacle(obstacle) {
+            log(`❌ Obstacle Impacted: ${obstacle.type} ${obstacle.emoji}`);
+            gameState.gold = Math.max(gameState.gold - 200, 0);
+            gameState.ammunition = Math.max(gameState.ammunition - 20, 0);
+            log('Resources depleted due to the obstacle.');
+            showStatus();
+        }
+
+        // Function to fire cannons
+        function fireCannon() {
+            if(gameState.ammunition > 0) {
+                gameState.ammunition -= 10;
+                log('🔫 Firing cannons at incoming threats...');
+                // Simulate firing delay
+                setTimeout(() => {
+                    const hitChance = 0.7; // 70% chance to hit
+                    if(Math.random() < hitChance) {
+                        log('🎯 Target Acquired and Neutralized.');
+                        gameState.gold += 200;
+                        gameState.knowledge += 20;
+                        gameState.ideology += 5;
+                        showStatus();
+                    } else {
+                        log('❌ Missed the target. Ammunition wasted.');
+                        showStatus();
+                    }
+                }, 1500);
+            } else {
+                log('🔫 Out of ammunition. Unable to fire cannons.');
+            }
+        }
+
+        // Function to customize ship
+        function customizeShip() {
+            log('🔧 Customization Menu: Toggle Ship Features');
+            log('Available Customizations:\n1. Sails ⛵️\n2. Hull 🛥️\n3. Cannons 🔫\nType the number to toggle the feature.');
+            // Wait for user input
+            const handleCustomization = (event) => {
+                if(event.key === 'Enter') {
+                    const input = userCommandInput.value.trim();
+                    userCommandInput.value = '';
+                    switch(input) {
+                        case '1':
+                            playerShip.customize('sails');
+                            log('⛵️ Sails toggled.');
+                            break;
+                        case '2':
+                            playerShip.customize('hull');
+                            log('🛥️ Hull toggled.');
+                            break;
+                        case '3':
+                            playerShip.customize('cannons');
+                            log('🔫 Cannons toggled.');
+                            break;
+                        default:
+                            log('Invalid selection. Please type 1, 2, or 3.');
+                    }
+                    document.removeEventListener('keydown', handleCustomization);
+                    showStatus();
+                }
+            };
+            document.addEventListener('keydown', handleCustomization);
+        }
+
+        // ===========================
+        // Initialize Game
+        // ===========================
+        function initializeGame() {
+            log('🚀 Welcome, Captain! Prepare to navigate the vast expanse of space.');
+            log('Type "help" to see a list of available commands.');
+        }
+
+        // ===========================
+        // Event Listeners
+        // ===========================
+        sendCommandButton.addEventListener('click', () => {
+            const command = userCommandInput.value.trim();
+            if(command !== '') {
+                log(`> ${command}`);
+                processCommand(command);
+                userCommandInput.value = '';
+            }
+        });
+
+        userCommandInput.addEventListener('keydown', (event) => {
+            if(event.key === 'Enter') {
+                sendCommandButton.click();
+            }
+        });
+
+        // ===========================
+        // Start the Game
+        // ===========================
+        initializeGame();
+    </script>
+</body>
+</html>
