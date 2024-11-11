@@ -1,183 +1,500 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <title>Fluid Composition Explorer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Fonts and Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <!-- Styles -->
     <style>
+        :root {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --accent-1: #3b82f6;
+            --accent-2: #f59e0b;
+            --accent-3: #10b981;
+            --text: #e2e8f0;
+            --math-bg: #1a1a2e;
+        }
+
+        /* Reset and Body Styles */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: var(--bg-primary);
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        /* Container */
         .container {
             width: 100%;
+            max-width: 1200px;
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Game Area */
+        .game-area {
             height: 400px;
-            background: #1a1a1a;
+            background: var(--bg-primary);
+            border-radius: 12px;
             position: relative;
+            margin: 20px 0;
             overflow: hidden;
-            font-family: system-ui, sans-serif;
+            border: 2px solid rgba(255, 255, 255, 0.1);
         }
 
-        .fluid-element {
-            width: 60px;
-            height: 60px;
-            background: #4a90e2;
-            border-radius: 50%;
-            position: absolute;
-            left: 50%;
-            top: 50%;
-            transform: translate(-50%, -50%);
-            transition: all 0.5s ease;
-            cursor: pointer;
-        }
-
-        .control-boundary {
+        /* Domains */
+        .domain {
             width: 200px;
             height: 200px;
-            border: 2px dashed #666;
+            border: 2px dashed rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            position: absolute;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.3s;
+        }
+        .domain:hover {
+            border-color: rgba(255, 255, 255, 0.4);
+            transform: scale(1.02);
+        }
+        #domainX {
+            top: 100px;
+            left: 100px;
+            background: rgba(59, 130, 246, 0.1);
+        }
+        #domainY {
+            top: 100px;
+            right: 100px;
+            background: rgba(245, 158, 11, 0.1);
+        }
+        .domain-label {
+            font-size: 1.2em;
+            font-weight: 600;
+            text-align: center;
+            opacity: 0.9;
+        }
+        .domain-emoji {
+            font-size: 2em;
+            margin: 5px 0;
+        }
+        .domain-description {
+            font-size: 0.9em;
+            text-align: center;
+            opacity: 0.7;
+            max-width: 180px;
+            padding: 0 10px;
+        }
+
+        /* Elements */
+        .element {
+            width: 80px;
+            height: 80px;
             border-radius: 50%;
             position: absolute;
-            left: 50%;
-            top: 50%;
-            transform: translate(-50%, -50%);
-            opacity: 0.5;
-        }
-
-        .equation {
-            position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
+            cursor: grab;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
             color: white;
-            font-size: 20px;
-            font-family: 'Times New Roman', serif;
+            user-select: none;
+            transition: all 0.2s;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
         }
+        .element:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+        }
+        .element:active {
+            cursor: grabbing;
+            transform: scale(1.1);
+        }
+        .element-emoji {
+            font-size: 1.8em;
+            margin-bottom: 2px;
+        }
+        .element-label {
+            font-size: 0.8em;
+            opacity: 0.9;
+        }
+        .element.source { background: var(--accent-1); }
+        .element.intermediate { background: var(--accent-2); }
+        .element.final { background: var(--accent-3); }
 
-        .instructions {
+        /* Messages */
+        .message-box {
             position: absolute;
             top: 20px;
             left: 50%;
             transform: translateX(-50%);
-            color: white;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-weight: 600;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 300px;
             text-align: center;
-            font-size: 14px;
+        }
+        .message-emoji {
+            font-size: 1.2em;
         }
 
-        .phase-indicator {
-            position: absolute;
-            top: 60px;
-            left: 50%;
-            transform: translateX(-50%);
-            color: #4a90e2;
-            font-size: 16px;
+        /* Controls */
+        .controls {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        .control-btn {
+            background: var(--accent-1);
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .control-btn:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+        .control-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Proof Section */
+        .proof-section {
+            background: var(--math-bg);
+            border-radius: 12px;
+            padding: 24px;
+            margin-top: 24px;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--text);
+        }
+        .proof-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+        .proof-tab {
+            padding: 8px 16px;
+            background: transparent;
+            border: 1px solid var(--accent-1);
+            color: var(--text);
+            cursor: pointer;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .proof-tab.active {
+            background: var(--accent-1);
+        }
+        .proof-content {
+            line-height: 1.6;
+            padding: 16px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+        }
+        .proof-definition {
+            margin: 12px 0;
+            padding-left: 20px;
+            border-left: 2px solid var(--accent-1);
+        }
+        .proof-theorem {
+            margin: 12px 0;
+            padding-left: 20px;
+            border-left: 2px solid var(--accent-2);
+        }
+        .proof-equation {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 8px 12px;
+            border-radius: 8px;
+            margin: 12px 0;
+            font-family: 'JetBrains Mono', monospace;
+            overflow-x: auto;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="instructions">Click and drag the blue element to explore the composition f∘g</div>
-        <div class="phase-indicator">Initial State</div>
-        <div class="control-boundary"></div>
-        <div class="fluid-element"></div>
-        <div class="equation">f∘g≠idA</div>
+        <!-- Instructions -->
+        <div class="message-box">
+            <span class="message-emoji">🎮</span>
+            <span class="message-text">Drag the element to explore transformations!</span>
+        </div>
+
+        <!-- Simulator Area -->
+        <div class="game-area">
+            <!-- Domains -->
+            <div id="domainX" class="domain">
+                <div class="domain-label">Domain X</div>
+                <div class="domain-emoji">🏡</div>
+                <div class="domain-description">Local Practices</div>
+            </div>
+            <div id="domainY" class="domain">
+                <div class="domain-label">Domain Y</div>
+                <div class="domain-emoji">🏢</div>
+                <div class="domain-description">Standardized Systems</div>
+            </div>
+
+            <!-- Elements -->
+            <div class="element source" id="sourceElement">
+                <div class="element-emoji">🔧</div>
+                <div class="element-label">x</div>
+            </div>
+            <div class="element intermediate" id="intermediateElement" style="display: none">
+                <div class="element-emoji">⚙️</div>
+                <div class="element-label">f(x)</div>
+            </div>
+            <div class="element final" id="finalElement" style="display: none">
+                <div class="element-emoji">🤝</div>
+                <div class="element-label">g(f(x))</div>
+            </div>
+        </div>
+
+        <!-- Controls -->
+        <div class="controls">
+            <button class="control-btn" id="resetBtn">
+                <span>🔄</span> Reset
+            </button>
+            <button class="control-btn" id="nextStepBtn">
+                <span>➡️</span> Next Step
+            </button>
+        </div>
+
+        <!-- Proof Section -->
+        <div class="proof-section">
+            <div class="proof-tabs">
+                <button class="proof-tab active" data-proof="1">Water Management</button>
+                <button class="proof-tab" data-proof="2">Development</button>
+                <button class="proof-tab" data-proof="3">Knowledge Systems</button>
+            </div>
+            <div class="proof-content" id="proofContent">
+                <!-- Proof content will be injected here -->
+            </div>
+        </div>
     </div>
 
+    <!-- JavaScript -->
     <script>
-        const fluidElement = document.querySelector('.fluid-element');
-        const phaseIndicator = document.querySelector('.phase-indicator');
-        const container = document.querySelector('.container');
-        
+        // Elements
+        const sourceElement = document.getElementById('sourceElement');
+        const intermediateElement = document.getElementById('intermediateElement');
+        const finalElement = document.getElementById('finalElement');
+        const messageText = document.querySelector('.message-text');
+        const resetBtn = document.getElementById('resetBtn');
+        const nextStepBtn = document.getElementById('nextStepBtn');
+        const proofContent = document.getElementById('proofContent');
+        const proofTabs = document.querySelectorAll('.proof-tab');
+
+        // Variables
+        let currentStep = 0;
+        let currentProof = 1;
         let isDragging = false;
-        let originalX, originalY;
-        let currentX, currentY;
-        let phase = 'initial';
-        let controlPoints = [];
+        let dragElement = null;
 
-        // Store initial position
-        const initialPosition = {
-            x: fluidElement.offsetLeft,
-            y: fluidElement.offsetTop
-        };
+        // Proofs Data
+        const proofs = [
+            {
+                title: "Water Management",
+                steps: [
+                    "Start with local water management practices (x)",
+                    "Apply f: Transform to centralized control (f(x))",
+                    "Apply g: Adapt controls back to local context (g(f(x)))"
+                ],
+                content: `
+                    <div class="proof-definition">
+                        <strong>Definition:</strong> Let X represent the set of local water management practices, and Y represent the set of centralized control mechanisms. The function f: X → Y models the transformation of local practices into standardized systems, and g: Y → X models the attempt to adapt these standardized systems back into the local context.
+                    </div>
+                    <div class="proof-theorem">
+                        <strong>Theorem:</strong> The composition g ∘ f is not the identity on X, i.e.,
+                    </div>
+                    <div class="proof-equation">
+                        g(f(x)) ≠ x \,\, \text{for some} \,\, x \in X
+                    </div>
+                    <div>
+                        <strong>Proof:</strong> Centralized control mechanisms (f(x)) inherently alter the flexibility and adaptability of local practices (x). When attempting to adapt f(x) back into the local context via g, certain nuances and informal practices are lost or modified, resulting in g(f(x)) being different from the original x.
+                    </div>
+                `
+            },
+            {
+                title: "Development Approaches",
+                steps: [
+                    "Start with a technical solution (x)",
+                    "Apply f: Consider socio-political context (f(x))",
+                    "Apply g: Implement within constraints (g(f(x)))"
+                ],
+                content: `
+                    <div class="proof-definition">
+                        <strong>Definition:</strong> Let X be the set of technical solutions, and Y be the set of socio-political contexts. The function f: X → Y represents the process of contextualizing technical solutions within social realities, and g: Y → X represents implementing solutions considering these constraints.
+                    </div>
+                    <div class="proof-theorem">
+                        <strong>Theorem:</strong> The composition g ∘ f does not equal the identity on X, i.e.,
+                    </div>
+                    <div class="proof-equation">
+                        g(f(x)) ≠ x \,\, \text{for some} \,\, x \in X
+                    </div>
+                    <div>
+                        <strong>Proof:</strong> Technical solutions (x) often assume ideal conditions. When mapped to socio-political contexts via f, they are adjusted to fit real-world constraints. Implementing these adjusted solutions via g results in g(f(x)), which may differ from the original x due to compromises and modifications necessary to address social complexities.
+                    </div>
+                `
+            },
+            {
+                title: "Knowledge Systems",
+                steps: [
+                    "Start with local knowledge (x)",
+                    "Apply f: Integrate external expertise (f(x))",
+                    "Apply g: Adapt expertise locally (g(f(x)))"
+                ],
+                content: `
+                    <div class="proof-definition">
+                        <strong>Definition:</strong> Let X denote community-based knowledge systems, and Y denote external expert knowledge. The function f: X → Y models the integration of external expertise into local knowledge, and g: Y → X represents adapting this integrated knowledge back into the local system.
+                    </div>
+                    <div class="proof-theorem">
+                        <strong>Theorem:</strong> The composition g ∘ f is not the identity on X, i.e.,
+                    </div>
+                    <div class="proof-equation">
+                        g(f(x)) ≠ x \,\, \text{for some} \,\, x \in X
+                    </div>
+                    <div>
+                        <strong>Proof:</strong> Introducing external expertise (f(x)) can alter local knowledge structures and practices. When attempting to adapt this expertise back into the local system via g, certain elements of autonomy and tradition may be lost or changed, leading to g(f(x)) differing from the original local knowledge x.
+                    </div>
+                `
+            }
+        ];
 
-        fluidElement.addEventListener('mousedown', startDragging);
-        document.addEventListener('mousemove', drag);
-        document.addEventListener('mouseup', stopDragging);
+        // Initialize Draggable Elements
+        function initDraggable(element) {
+            let offsetX, offsetY;
 
-        function startDragging(e) {
-            isDragging = true;
-            const rect = fluidElement.getBoundingClientRect();
-            originalX = e.clientX - rect.left;
-            originalY = e.clientY - rect.top;
-        }
+            element.addEventListener('mousedown', (e) => {
+                isDragging = true;
+                dragElement = element;
+                const rect = element.getBoundingClientRect();
+                offsetX = e.clientX - rect.left;
+                offsetY = e.clientY - rect.top;
 
-        function drag(e) {
-            if (!isDragging) return;
+                document.addEventListener('mousemove', drag);
+                document.addEventListener('mouseup', dragEnd);
+            });
 
-            e.preventDefault();
-            
-            currentX = e.clientX - originalX;
-            currentY = e.clientY - originalY;
-
-            // Apply control boundary constraints (g function)
-            const containerRect = container.getBoundingClientRect();
-            const radius = 100; // Control boundary radius
-            const centerX = containerRect.width / 2;
-            const centerY = containerRect.height / 2;
-            
-            const dx = currentX - centerX;
-            const dy = currentY - centerY;
-            const distance = Math.sqrt(dx * dx + dy * dy);
-
-            if (distance > radius) {
-                const angle = Math.atan2(dy, dx);
-                currentX = centerX + radius * Math.cos(angle);
-                currentY = centerY + radius * Math.sin(angle);
+            function drag(e) {
+                if (!isDragging) return;
+                const gameArea = document.querySelector('.game-area').getBoundingClientRect();
+                let x = e.clientX - gameArea.left - offsetX;
+                let y = e.clientY - gameArea.top - offsetY;
+                dragElement.style.left = x + 'px';
+                dragElement.style.top = y + 'px';
             }
 
-            fluidElement.style.left = `${currentX}px`;
-            fluidElement.style.top = `${currentY}px`;
-
-            // Store control points for the composition
-            controlPoints.push({x: currentX, y: currentY});
-            if (controlPoints.length > 50) controlPoints.shift();
-
-            // Update phase
-            if (distance > radius * 0.8) {
-                phase = 'control';
-                phaseIndicator.textContent = 'Control Phase (g)';
-                fluidElement.style.background = '#e24a4a';
-            } else if (distance > radius * 0.4) {
-                phase = 'adaptation';
-                phaseIndicator.textContent = 'Adaptation Phase (f)';
-                fluidElement.style.background = '#4ae24a';
-            } else {
-                phase = 'fluid';
-                phaseIndicator.textContent = 'Fluid State';
-                fluidElement.style.background = '#4a90e2';
+            function dragEnd() {
+                isDragging = false;
+                document.removeEventListener('mousemove', drag);
+                document.removeEventListener('mouseup', dragEnd);
+                checkPosition();
             }
         }
 
-        function stopDragging() {
-            if (!isDragging) return;
-            isDragging = false;
+        // Check Position for Steps
+        function checkPosition() {
+            const domainX = document.getElementById('domainX').getBoundingClientRect();
+            const domainY = document.getElementById('domainY').getBoundingClientRect();
+            const elementRect = dragElement.getBoundingClientRect();
 
-            // Demonstrate non-identity by not returning exactly to original position
-            const finalX = currentX + (Math.random() - 0.5) * 20;
-            const finalY = currentY + (Math.random() - 0.5) * 20;
-
-            fluidElement.style.transition = 'all 0.5s ease';
-            fluidElement.style.left = `${finalX}px`;
-            fluidElement.style.top = `${finalY}px`;
-
-            setTimeout(() => {
-                fluidElement.style.transition = 'none';
-            }, 500);
-
-            // Clear control points
-            controlPoints = [];
+            if (currentStep === 0 && isOverlapping(elementRect, domainY)) {
+                intermediateElement.style.display = 'flex';
+                currentStep = 1;
+                updateMessage();
+            } else if (currentStep === 1 && isOverlapping(elementRect, domainX)) {
+                finalElement.style.display = 'flex';
+                currentStep = 2;
+                updateMessage();
+            }
         }
 
-        // Add some ambient motion to show fluidity
-        setInterval(() => {
-            if (!isDragging) {
-                const wobble = Math.sin(Date.now() / 1000) * 5;
-                fluidElement.style.transform = `translate(-50%, -50%) scale(${1 + wobble/100})`;
+        // Check if Element is Overlapping with Domain
+        function isOverlapping(rect1, rect2) {
+            return !(
+                rect1.right < rect2.left ||
+                rect1.left > rect2.right ||
+                rect1.bottom < rect2.top ||
+                rect1.top > rect2.bottom
+            );
+        }
+
+        // Update Message Based on Step
+        function updateMessage() {
+            const steps = proofs[currentProof - 1].steps;
+            messageText.textContent = steps[currentStep] || "Transformation Complete!";
+        }
+
+        // Reset Functionality
+        function reset() {
+            currentStep = 0;
+            sourceElement.style.left = '150px';
+            sourceElement.style.top = '170px';
+            intermediateElement.style.display = 'none';
+            intermediateElement.style.left = 'initial';
+            intermediateElement.style.top = 'initial';
+            finalElement.style.display = 'none';
+            finalElement.style.left = 'initial';
+            finalElement.style.top = 'initial';
+            updateMessage();
+        }
+
+        // Update Proof Content
+        function updateProof(index) {
+            currentProof = index;
+            proofContent.innerHTML = proofs[index - 1].content;
+            reset();
+            proofTabs.forEach(tab => {
+                tab.classList.toggle('active', parseInt(tab.dataset.proof) === index);
+            });
+        }
+
+        // Event Listeners for Controls
+        resetBtn.addEventListener('click', reset);
+        nextStepBtn.addEventListener('click', () => {
+            if (currentStep < 2) {
+                currentStep++;
+                if (currentStep === 1) intermediateElement.style.display = 'flex';
+                if (currentStep === 2) finalElement.style.display = 'flex';
+                updateMessage();
             }
-        }, 50);
+        });
+
+        // Event Listeners for Proof Tabs
+        proofTabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                updateProof(parseInt(tab.dataset.proof));
+            });
+        });
+
+        // Initialize
+        initDraggable(sourceElement);
+        initDraggable(intermediateElement);
+        initDraggable(finalElement);
+        updateProof(1);
     </script>
-</div>
 </body>
 </html>
