@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        .container {
+            width: 100%;
+            height: 600px;
+            background: #111827;
+            position: relative;
+            overflow: hidden;
+            font-family: system-ui, sans-serif;
+        }
+
+        .network-node {
+            position: absolute;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.4s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
+            text-align: center;
+            padding: 10px;
+        }
+
+        .network-line {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.2);
+            transform-origin: left center;
+            pointer-events: none;
+        }
+
+        .info-panel {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: white;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px;
+            border-radius: 8px;
+            width: 80%;
+            max-width: 600px;
+        }
+
+        .perspective-toggle {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+        }
+
+        .toggle-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            transition: all 0.3s ease;
+        }
+
+        .toggle-btn.active {
+            background: #4a90e2;
+        }
+
+        .legend {
+            position: absolute;
+            top: 70px;
+            right: 20px;
+            color: white;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="perspective-toggle">
+            <button class="toggle-btn active" data-view="ant">ANT View</button>
+            <button class="toggle-btn" data-view="colonial">Colonial Context</button>
+        </div>
+        <div class="legend">
+            ⭕ Technology Node<br>
+            🔷 Power Structure<br>
+            ⬡ Local Knowledge<br>
+            ▲ Colonial Legacy
+        </div>
+        <div class="info-panel">
+            Click nodes to explore network relationships
+        </div>
+    </div>
+
+    <script>
+        const container = document.querySelector('.container');
+        const infoPanel = document.querySelector('.info-panel');
+        
+        // Node definitions with dual perspectives
+        const nodes = [
+            {
+                id: 'pump',
+                label: '⭕ Bush Pump',
+                x: 50,
+                y: 50,
+                size: 60,
+                color: '#4a90e2',
+                antInfo: 'Fluid technology adapting to local needs',
+                colonialInfo: 'Technology embedded in colonial land distribution'
+            },
+            {
+                id: 'land',
+                label: '▲ Land Rights',
+                x: 30,
+                y: 70,
+                size: 50,
+                color: '#e24a4a',
+                antInfo: 'Local resource management',
+                colonialInfo: 'Historical racial inequality in land ownership'
+            },
+            {
+                id: 'knowledge',
+                label: '⬡ Local Practices',
+                x: 70,
+                y: 40,
+                size: 45,
+                color: '#4ae24a',
+                antInfo: 'Community maintenance practices',
+                colonialInfo: 'Indigenous water management systems'
+            },
+            {
+                id: 'power',
+                label: '🔷 Governance',
+                x: 60,
+                y: 80,
+                size: 55,
+                color: '#e2a44a',
+                antInfo: 'Distributed maintenance network',
+                colonialInfo: 'Post-colonial power structures'
+            }
+        ];
+
+        let currentView = 'ant';
+        let activeNode = null;
+        const nodeElements = new Map();
+        const lines = [];
+
+        // Create nodes
+        nodes.forEach(node => {
+            const element = document.createElement('div');
+            element.className = 'network-node';
+            element.innerHTML = node.label;
+            element.style.width = `${node.size}px`;
+            element.style.height = `${node.size}px`;
+            element.style.backgroundColor = node.color;
+            element.style.left = `${node.x}%`;
+            element.style.top = `${node.y}%`;
+            
+            element.addEventListener('click', () => highlightNode(node));
+            
+            container.appendChild(element);
+            nodeElements.set(node.id, element);
+        });
+
+        // Create connections
+        function createLines() {
+            lines.forEach(line => line.remove());
+            lines.length = 0;
+
+            nodes.forEach((node1, i) => {
+                nodes.forEach((node2, j) => {
+                    if (i < j) {
+                        const line = document.createElement('div');
+                        line.className = 'network-line';
+                        container.appendChild(line);
+                        lines.push(line);
+                        updateLine(line, nodeElements.get(node1.id), nodeElements.get(node2.id));
+                    }
+                });
+            });
+        }
+
+        function updateLine(line, elem1, elem2) {
+            const rect1 = elem1.getBoundingClientRect();
+            const rect2 = elem2.getBoundingClientRect();
+            
+            const x1 = rect1.left + rect1.width / 2;
+            const y1 = rect1.top + rect1.height / 2;
+            const x2 = rect2.left + rect2.width / 2;
+            const y2 = rect2.top + rect2.height / 2;
+            
+            const length = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+            const angle = Math.atan2(y2 - y1, x2 - x1) * 180 / Math.PI;
+            
+            line.style.width = `${length}px`;
+            line.style.height = '2px';
+            line.style.left = `${x1}px`;
+            line.style.top = `${y1}px`;
+            line.style.transform = `rotate(${angle}deg)`;
+        }
+
+        function highlightNode(node) {
+            if (activeNode === node.id) {
+                activeNode = null;
+                nodeElements.forEach(elem => {
+                    elem.style.opacity = '1';
+                    elem.style.transform = 'scale(1)';
+                });
+                infoPanel.textContent = 'Click nodes to explore network relationships';
+            } else {
+                activeNode = node.id;
+                nodeElements.forEach(elem => {
+                    elem.style.opacity = '0.3';
+                    elem.style.transform = 'scale(0.8)';
+                });
+                const activeElem = nodeElements.get(node.id);
+                activeElem.style.opacity = '1';
+                activeElem.style.transform = 'scale(1.2)';
+                infoPanel.textContent = currentView === 'ant' ? node.antInfo : node.colonialInfo;
+            }
+        }
+
+        // Toggle perspective
+        document.querySelectorAll('.toggle-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentView = btn.dataset.view;
+                
+                // Update node positions based on perspective
+                nodes.forEach(node => {
+                    const elem = nodeElements.get(node.id);
+                    if (currentView === 'colonial') {
+                        elem.style.left = `${node.x + 10}%`;
+                        elem.style.top = `${node.y - 5}%`;
+                    } else {
+                        elem.style.left = `${node.x}%`;
+                        elem.style.top = `${node.y}%`;
+                    }
+                });
+                
+                if (activeNode) {
+                    const node = nodes.find(n => n.id === activeNode);
+                    infoPanel.textContent = currentView === 'ant' ? node.antInfo : node.colonialInfo;
+                }
+                
+                createLines();
+            });
+        });
+
+        // Initial line creation
+        createLines();
+
+        // Update lines on window resize
+        window.addEventListener('resize', () => createLines());
+    </script>
+</body>
+</html>

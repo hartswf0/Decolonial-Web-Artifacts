@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        .container {
+            width: 100%;
+            height: 400px;
+            background: #1a1a1a;
+            position: relative;
+            overflow: hidden;
+            font-family: system-ui, sans-serif;
+        }
+
+        .fluid-element {
+            width: 60px;
+            height: 60px;
+            background: #4a90e2;
+            border-radius: 50%;
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            transition: all 0.5s ease;
+            cursor: pointer;
+        }
+
+        .control-boundary {
+            width: 200px;
+            height: 200px;
+            border: 2px dashed #666;
+            border-radius: 50%;
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            opacity: 0.5;
+        }
+
+        .equation {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: white;
+            font-size: 20px;
+            font-family: 'Times New Roman', serif;
+        }
+
+        .instructions {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: white;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        .phase-indicator {
+            position: absolute;
+            top: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #4a90e2;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="instructions">Click and drag the blue element to explore the composition f∘g</div>
+        <div class="phase-indicator">Initial State</div>
+        <div class="control-boundary"></div>
+        <div class="fluid-element"></div>
+        <div class="equation">f∘g≠idA</div>
+    </div>
+
+    <script>
+        const fluidElement = document.querySelector('.fluid-element');
+        const phaseIndicator = document.querySelector('.phase-indicator');
+        const container = document.querySelector('.container');
+        
+        let isDragging = false;
+        let originalX, originalY;
+        let currentX, currentY;
+        let phase = 'initial';
+        let controlPoints = [];
+
+        // Store initial position
+        const initialPosition = {
+            x: fluidElement.offsetLeft,
+            y: fluidElement.offsetTop
+        };
+
+        fluidElement.addEventListener('mousedown', startDragging);
+        document.addEventListener('mousemove', drag);
+        document.addEventListener('mouseup', stopDragging);
+
+        function startDragging(e) {
+            isDragging = true;
+            const rect = fluidElement.getBoundingClientRect();
+            originalX = e.clientX - rect.left;
+            originalY = e.clientY - rect.top;
+        }
+
+        function drag(e) {
+            if (!isDragging) return;
+
+            e.preventDefault();
+            
+            currentX = e.clientX - originalX;
+            currentY = e.clientY - originalY;
+
+            // Apply control boundary constraints (g function)
+            const containerRect = container.getBoundingClientRect();
+            const radius = 100; // Control boundary radius
+            const centerX = containerRect.width / 2;
+            const centerY = containerRect.height / 2;
+            
+            const dx = currentX - centerX;
+            const dy = currentY - centerY;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance > radius) {
+                const angle = Math.atan2(dy, dx);
+                currentX = centerX + radius * Math.cos(angle);
+                currentY = centerY + radius * Math.sin(angle);
+            }
+
+            fluidElement.style.left = `${currentX}px`;
+            fluidElement.style.top = `${currentY}px`;
+
+            // Store control points for the composition
+            controlPoints.push({x: currentX, y: currentY});
+            if (controlPoints.length > 50) controlPoints.shift();
+
+            // Update phase
+            if (distance > radius * 0.8) {
+                phase = 'control';
+                phaseIndicator.textContent = 'Control Phase (g)';
+                fluidElement.style.background = '#e24a4a';
+            } else if (distance > radius * 0.4) {
+                phase = 'adaptation';
+                phaseIndicator.textContent = 'Adaptation Phase (f)';
+                fluidElement.style.background = '#4ae24a';
+            } else {
+                phase = 'fluid';
+                phaseIndicator.textContent = 'Fluid State';
+                fluidElement.style.background = '#4a90e2';
+            }
+        }
+
+        function stopDragging() {
+            if (!isDragging) return;
+            isDragging = false;
+
+            // Demonstrate non-identity by not returning exactly to original position
+            const finalX = currentX + (Math.random() - 0.5) * 20;
+            const finalY = currentY + (Math.random() - 0.5) * 20;
+
+            fluidElement.style.transition = 'all 0.5s ease';
+            fluidElement.style.left = `${finalX}px`;
+            fluidElement.style.top = `${finalY}px`;
+
+            setTimeout(() => {
+                fluidElement.style.transition = 'none';
+            }, 500);
+
+            // Clear control points
+            controlPoints = [];
+        }
+
+        // Add some ambient motion to show fluidity
+        setInterval(() => {
+            if (!isDragging) {
+                const wobble = Math.sin(Date.now() / 1000) * 5;
+                fluidElement.style.transform = `translate(-50%, -50%) scale(${1 + wobble/100})`;
+            }
+        }, 50);
+    </script>
+</div>
+</body>
+</html>
