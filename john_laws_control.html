@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Space Pirate Captain Console</title>
+    <title>The Portuguese Voyager: An Interactive Adventure</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         /* ===========================
@@ -15,9 +15,9 @@
         }
 
         body {
-            background-color: #000; /* Black background for space feel */
-            color: #00FF00; /* Green text for retro console feel */
-            font-family: 'Courier New', Courier, monospace;
+            background-color: #fdf5e6; /* Tan background for parchment feel */
+            color: #333;
+            font-family: 'Times New Roman', serif;
             overflow: hidden;
             display: flex;
             justify-content: center;
@@ -31,11 +31,13 @@
         #console-container {
             width: 80%;
             height: 80%;
-            background-color: #000;
-            border: 2px solid #00FF00;
+            background-color: #fffaf0;
+            border: 2px solid #8b4513;
             padding: 20px;
             overflow-y: auto;
             position: relative;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            border-radius: 10px;
         }
 
         /* ===========================
@@ -44,6 +46,11 @@
         #console-output {
             white-space: pre-wrap;
             word-wrap: break-word;
+            max-height: calc(100% - 80px);
+            overflow-y: auto;
+            padding-right: 10px;
+            font-size: 18px;
+            line-height: 1.6;
         }
 
         /* ===========================
@@ -60,33 +67,25 @@
         #command-input input {
             flex: 1;
             padding: 10px;
-            background-color: #000;
-            border: 1px solid #00FF00;
-            color: #00FF00;
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 16px;
+            background-color: #fffaf0;
+            border: 1px solid #8b4513;
+            color: #333;
+            font-family: 'Times New Roman', serif;
+            font-size: 18px;
         }
 
         #command-input button {
             padding: 10px 20px;
-            background-color: #00FF00;
+            background-color: #8b4513;
             border: none;
-            color: #000;
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 16px;
+            color: #fff;
+            font-family: 'Times New Roman', serif;
+            font-size: 18px;
             cursor: pointer;
         }
 
         #command-input button:hover {
-            background-color: #ADFF2F;
-        }
-
-        /* ===========================
-           Retro Styling
-        =========================== */
-        ::selection {
-            background: #ADFF2F;
-            color: #000;
+            background-color: #a0522d;
         }
 
         /* ===========================
@@ -97,13 +96,34 @@
         }
 
         #console-container::-webkit-scrollbar-track {
-            background: #333;
+            background: #f0e68c;
         }
 
         #console-container::-webkit-scrollbar-thumb {
-            background-color: #00FF00;
+            background-color: #cd853f;
             border-radius: 10px;
-            border: 2px solid #333;
+            border: 2px solid #f0e68c;
+        }
+
+        /* ===========================
+           Text Styling
+        =========================== */
+        .prompt {
+            font-weight: bold;
+        }
+
+        .option {
+            margin-left: 20px;
+            cursor: pointer;
+            color: #8b4513;
+        }
+
+        .option:hover {
+            text-decoration: underline;
+        }
+
+        .narration {
+            margin-bottom: 15px;
         }
     </style>
 </head>
@@ -115,7 +135,7 @@
 
         <!-- Command Input -->
         <div id="command-input">
-            <input type="text" id="user-command" placeholder="Enter command here...">
+            <input type="text" id="user-command" placeholder="Enter your choice...">
             <button id="send-command">Send</button>
         </div>
     </div>
@@ -128,18 +148,14 @@
         const gameState = {
             gold: 1000,
             knowledge: 0,
-            ammunition: 100,
-            ideology: 0, // Represents Ideological Influence in %
-            guides: 0, // Number of local guides
-            obstacles: [], // Active obstacles
-            commands: ['navigate', 'acquire guide', 'status', 'fire', 'customize'],
-            ship: {
-                customizations: {
-                    sails: false,
-                    hull: false,
-                    cannons: false
-                }
-            }
+            voyagesCompleted: 0,
+            currentMission: null,
+            missionIndex: 0,
+            choices: [],
+            shipCondition: 100, // Represents the ship's integrity
+            crewMorale: 100, // Represents crew's morale
+            eventsCompleted: [],
+            isGameOver: false
         };
 
         // ===========================
@@ -150,225 +166,275 @@
         const sendCommandButton = document.getElementById('send-command');
 
         // ===========================
+        // Game Content
+        // ===========================
+        const missions = [
+            {
+                title: "The Journey Begins",
+                narration: "You are appointed as the captain of a Portuguese carrack, tasked with finding a sea route to India. Your journey starts from Lisbon. Do you:",
+                options: [
+                    {
+                        text: "Set sail immediately, trusting in your crew and technology.",
+                        consequences: {
+                            knowledge: -10,
+                            crewMorale: -20,
+                            nextMission: "Calm Seas or Rough Waters?"
+                        },
+                        note: "Relying solely on technology without local knowledge may lead to challenges."
+                    },
+                    {
+                        text: "Recruit experienced local pilots familiar with the African coast.",
+                        consequences: {
+                            gold: -200,
+                            knowledge: +20,
+                            crewMorale: +10,
+                            nextMission: "Calm Seas or Rough Waters?"
+                        },
+                        note: "Utilizing local expertise increases chances of success."
+                    }
+                ]
+            },
+            {
+                title: "Calm Seas or Rough Waters?",
+                narration: "As you navigate along the coast of Africa, you encounter unpredictable currents and winds. Do you:",
+                options: [
+                    {
+                        text: "Consult with your local pilots to adjust your route.",
+                        consequences: {
+                            knowledge: +20,
+                            crewMorale: +10,
+                            shipCondition: +10,
+                            nextMission: "Encounter at Mozambique"
+                        },
+                        note: "Adapting to local conditions can preserve resources."
+                    },
+                    {
+                        text: "Proceed as planned, trusting in your navigational instruments.",
+                        consequences: {
+                            shipCondition: -30,
+                            crewMorale: -20,
+                            nextMission: "Encounter at Mozambique"
+                        },
+                        note: "Ignoring local conditions can have detrimental effects."
+                    }
+                ]
+            },
+            {
+                title: "Encounter at Mozambique",
+                narration: "You arrive at Mozambique and have the opportunity to interact with the local ruler. Do you:",
+                options: [
+                    {
+                        text: "Seek an audience to request local pilots for the Indian Ocean.",
+                        consequences: {
+                            gold: -300,
+                            knowledge: +30,
+                            crewMorale: +10,
+                            nextMission: "Crossing the Indian Ocean"
+                        },
+                        note: "Forming alliances can provide valuable assistance."
+                    },
+                    {
+                        text: "Demand resources and assistance, asserting your superiority.",
+                        consequences: {
+                            crewMorale: -30,
+                            shipCondition: -20,
+                            nextMission: "Crossing the Indian Ocean"
+                        },
+                        note: "Aggressive tactics may backfire and harm relations."
+                    }
+                ]
+            },
+            {
+                title: "Crossing the Indian Ocean",
+                narration: "With the vast Indian Ocean ahead, you must decide how to proceed. Do you:",
+                options: [
+                    {
+                        text: "Follow the monsoon winds as advised by local pilots.",
+                        consequences: {
+                            knowledge: +40,
+                            crewMorale: +20,
+                            shipCondition: +20,
+                            nextMission: "Arrival in Calicut"
+                        },
+                        note: "Leveraging local knowledge optimizes the journey."
+                    },
+                    {
+                        text: "Chart your own course, aiming for a direct route.",
+                        consequences: {
+                            shipCondition: -50,
+                            crewMorale: -40,
+                            nextMission: "Arrival in Calicut"
+                        },
+                        note: "Ignoring expert advice can lead to severe consequences."
+                    }
+                ]
+            },
+            {
+                title: "Arrival in Calicut",
+                narration: "You reach the port city of Calicut in India. The local ruler, the Zamorin, is open to trade. Do you:",
+                options: [
+                    {
+                        text: "Engage in fair trade negotiations, offering valuable goods.",
+                        consequences: {
+                            gold: +500,
+                            knowledge: +50,
+                            crewMorale: +30,
+                            nextMission: "Return Voyage"
+                        },
+                        note: "Mutual respect fosters profitable relationships."
+                    },
+                    {
+                        text: "Attempt to assert control over the trade by force.",
+                        consequences: {
+                            shipCondition: -40,
+                            crewMorale: -50,
+                            eventsCompleted: ["Conflict in Calicut"],
+                            nextMission: "Return Voyage"
+                        },
+                        note: "Hostile actions can lead to conflict and loss."
+                    }
+                ]
+            },
+            {
+                title: "Return Voyage",
+                narration: "It's time to return to Portugal with your findings. Do you:",
+                options: [
+                    {
+                        text: "Retrace your route, utilizing knowledge gained.",
+                        consequences: {
+                            knowledge: +30,
+                            crewMorale: +20,
+                            shipCondition: +20,
+                            endGame: true
+                        },
+                        note: "Applying experience ensures a safer journey home."
+                    },
+                    {
+                        text: "Explore a new route to discover more lands.",
+                        consequences: {
+                            shipCondition: -60,
+                            crewMorale: -30,
+                            knowledge: +50,
+                            endGame: true
+                        },
+                        note: "While risky, exploration can yield new knowledge."
+                    }
+                ]
+            }
+        ];
+
+        // ===========================
         // Utility Functions
         // ===========================
 
         // Function to append messages to console
         function log(message) {
-            consoleOutput.innerHTML += message + '\n';
+            consoleOutput.innerHTML += message + '\n\n';
             consoleOutput.scrollTop = consoleOutput.scrollHeight;
         }
 
-        // Function to process user commands
-        function processCommand(command) {
-            const args = command.toLowerCase().split(' ');
-            const mainCommand = args[0];
-
-            switch(mainCommand) {
-                case 'navigate':
-                    navigate();
-                    break;
-                case 'acquire':
-                    if(args[1] === 'guide') {
-                        acquireGuide();
-                    } else {
-                        log('Unknown command. Did you mean "acquire guide"?');
-                    }
-                    break;
-                case 'status':
-                    showStatus();
-                    break;
-                case 'fire':
-                    fireCannon();
-                    break;
-                case 'customize':
-                    customizeShip();
-                    break;
-                case 'help':
-                    showHelp();
-                    break;
-                default:
-                    log('Unknown command. Type "help" for a list of commands.');
+        // Function to start a mission
+        function startMission(missionTitle) {
+            const mission = missions.find(m => m.title === missionTitle);
+            if (mission) {
+                gameState.currentMission = mission;
+                displayMission(mission);
+            } else {
+                log("Mission not found.");
             }
         }
 
-        // Function to show help
-        function showHelp() {
-            log('Available Commands:\n- navigate\n- acquire guide\n- status\n- fire\n- customize\n- help');
+        // Function to display mission narration and options
+        function displayMission(mission) {
+            log(`\n=== ${mission.title} ===\n`);
+            log(`${mission.narration}`);
+            mission.options.forEach((option, index) => {
+                log(`Option ${index + 1}: ${option.text}`);
+            });
+            log("Enter the number of your choice:");
         }
 
-        // Function to show status
-        function showStatus() {
-            log(`Status:
+        // Function to process user choice
+        function processChoice(choice) {
+            const mission = gameState.currentMission;
+            const optionIndex = parseInt(choice) - 1;
+            if (optionIndex >= 0 && optionIndex < mission.options.length) {
+                const selectedOption = mission.options[optionIndex];
+                applyConsequences(selectedOption.consequences);
+                log(`\n${selectedOption.note}`);
+                if (selectedOption.consequences.endGame) {
+                    endGame();
+                } else if (selectedOption.consequences.nextMission) {
+                    startMission(selectedOption.consequences.nextMission);
+                } else {
+                    gameState.currentMission = null;
+                    log("Mission completed.");
+                }
+            } else {
+                log("Invalid choice. Please enter a valid option number.");
+            }
+        }
+
+        // Function to apply consequences of choices
+        function applyConsequences(consequences) {
+            for (const [key, value] of Object.entries(consequences)) {
+                if (key === "nextMission" || key === "endGame" || key === "eventsCompleted") continue;
+                gameState[key] += value;
+            }
+            if (consequences.eventsCompleted) {
+                gameState.eventsCompleted.push(...consequences.eventsCompleted);
+            }
+        }
+
+        // Function to check game over conditions
+        function checkGameOver() {
+            if (gameState.shipCondition <= 0 || gameState.crewMorale <= 0) {
+                gameState.isGameOver = true;
+                log("\nYour voyage has ended in failure due to poor ship condition or crew morale.");
+                log("Game Over.");
+            }
+        }
+
+        // Function to end the game successfully
+        function endGame() {
+            log("\nCongratulations! You have completed your voyage.");
+            log(`Final Status:
+📚 Knowledge: ${gameState.knowledge}
 🪙 Gold: ${gameState.gold}
-📚 Knowledge XP: ${gameState.knowledge}
-🔫 Ammunition: ${gameState.ammunition}
-🧠 Ideological Influence: ${gameState.ideology}%
-🧭 Local Guides: ${gameState.guides}`);
-        }
-
-        // Function to acquire a local guide
-        function acquireGuide() {
-            if(gameState.gold >= 500) {
-                gameState.gold -= 500;
-                gameState.guides += 1;
-                gameState.knowledge += 50;
-                gameState.ideology += 10;
-                log('You have successfully acquired a local guide. Navigation is now safer and more efficient.');
-                showStatus();
-            } else {
-                log('Insufficient gold to acquire a local guide.');
-            }
-        }
-
-        // Function to navigate
-        function navigate() {
-            log('Initiating navigation sequence...');
-            // Simulate navigation delay
-            setTimeout(() => {
-                log('Calculating optimal route...');
-                // Determine if there are unseen obstacles
-                if(gameState.guides > 0) {
-                    // Guides help reveal obstacles
-                    const obstacleChance = 0.3; // 30% chance to encounter an obstacle
-                    if(Math.random() < obstacleChance) {
-                        generateObstacle();
-                    } else {
-                        log('Navigation successful. The voyage continues smoothly.');
-                        gameState.knowledge += 20;
-                        gameState.ideology += 5;
-                        showStatus();
-                    }
-                } else {
-                    // Without guides, higher chance of obstacles
-                    const obstacleChance = 0.6; // 60% chance to encounter an obstacle
-                    if(Math.random() < obstacleChance) {
-                        generateObstacle();
-                    } else {
-                        log('Navigation successful. The voyage continues smoothly.');
-                        gameState.knowledge += 10;
-                        gameState.ideology += 3;
-                        showStatus();
-                    }
-                }
-            }, 2000);
-        }
-
-        // Function to generate an obstacle
-        function generateObstacle() {
-            const obstacleTypes = ['Asteroid Field', 'Black Hole', 'Nebula Storm'];
-            const obstacleEmojis = {
-                'Asteroid Field': '☄️',
-                'Black Hole': '🕳️',
-                'Nebula Storm': '🌌'
-            };
-            const randomType = obstacleTypes[Math.floor(Math.random() * obstacleTypes.length)];
-            const obstacle = {
-                type: randomType,
-                emoji: obstacleEmojis[randomType],
-                resolved: false
-            };
-            gameState.obstacles.push(obstacle);
-            log(`⚠️ Unseen Obstacle Detected: ${randomType} ${obstacle.emoji}`);
-            log('Attempting to resolve the obstacle...');
-            setTimeout(() => {
-                if(gameState.guides > 0) {
-                    resolveObstacle(obstacle);
-                } else {
-                    sufferObstacle(obstacle);
-                }
-            }, 2000);
-        }
-
-        // Function to resolve an obstacle
-        function resolveObstacle(obstacle) {
-            log(`✅ Obstacle Resolved: ${obstacle.type} ${obstacle.emoji}`);
-            gameState.knowledge += 30;
-            gameState.ideology += 5;
-            showStatus();
-        }
-
-        // Function to suffer from an obstacle
-        function sufferObstacle(obstacle) {
-            log(`❌ Obstacle Impacted: ${obstacle.type} ${obstacle.emoji}`);
-            gameState.gold = Math.max(gameState.gold - 200, 0);
-            gameState.ammunition = Math.max(gameState.ammunition - 20, 0);
-            log('Resources depleted due to the obstacle.');
-            showStatus();
-        }
-
-        // Function to fire cannons
-        function fireCannon() {
-            if(gameState.ammunition > 0) {
-                gameState.ammunition -= 10;
-                log('🔫 Firing cannons at incoming threats...');
-                // Simulate firing delay
-                setTimeout(() => {
-                    const hitChance = 0.7; // 70% chance to hit
-                    if(Math.random() < hitChance) {
-                        log('🎯 Target Acquired and Neutralized.');
-                        gameState.gold += 200;
-                        gameState.knowledge += 20;
-                        gameState.ideology += 5;
-                        showStatus();
-                    } else {
-                        log('❌ Missed the target. Ammunition wasted.');
-                        showStatus();
-                    }
-                }, 1500);
-            } else {
-                log('🔫 Out of ammunition. Unable to fire cannons.');
-            }
-        }
-
-        // Function to customize ship
-        function customizeShip() {
-            log('🔧 Customization Menu: Toggle Ship Features');
-            log('Available Customizations:\n1. Sails ⛵️\n2. Hull 🛥️\n3. Cannons 🔫\nType the number to toggle the feature.');
-            // Wait for user input
-            const handleCustomization = (event) => {
-                if(event.key === 'Enter') {
-                    const input = userCommandInput.value.trim();
-                    userCommandInput.value = '';
-                    switch(input) {
-                        case '1':
-                            playerShip.customize('sails');
-                            log('⛵️ Sails toggled.');
-                            break;
-                        case '2':
-                            playerShip.customize('hull');
-                            log('🛥️ Hull toggled.');
-                            break;
-                        case '3':
-                            playerShip.customize('cannons');
-                            log('🔫 Cannons toggled.');
-                            break;
-                        default:
-                            log('Invalid selection. Please type 1, 2, or 3.');
-                    }
-                    document.removeEventListener('keydown', handleCustomization);
-                    showStatus();
-                }
-            };
-            document.addEventListener('keydown', handleCustomization);
+⛵ Ship Condition: ${gameState.shipCondition}%
+😀 Crew Morale: ${gameState.crewMorale}%
+Events Encountered: ${gameState.eventsCompleted.length > 0 ? gameState.eventsCompleted.join(', ') : 'None'}`);
+            gameState.isGameOver = true;
         }
 
         // ===========================
         // Initialize Game
         // ===========================
         function initializeGame() {
-            log('🚀 Welcome, Captain! Prepare to navigate the vast expanse of space.');
-            log('Type "help" to see a list of available commands.');
+            log('📜 Welcome to "The Portuguese Voyager: An Interactive Adventure"!');
+            log('You are a Portuguese captain during the Age of Exploration.');
+            log('Your mission is to find a sea route to India and establish trade.');
+            log('Make decisions wisely to ensure the success of your voyage.');
+            startMission("The Journey Begins");
         }
 
         // ===========================
         // Event Listeners
         // ===========================
         sendCommandButton.addEventListener('click', () => {
-            const command = userCommandInput.value.trim();
-            if(command !== '') {
-                log(`> ${command}`);
-                processCommand(command);
+            if (gameState.isGameOver) {
+                log("The game has ended. Refresh the page to play again.");
+                return;
+            }
+            const choice = userCommandInput.value.trim();
+            if(choice !== '') {
+                log(`> ${choice}`);
+                if (gameState.currentMission) {
+                    processChoice(choice);
+                    checkGameOver();
+                } else {
+                    log("No current mission. The game may have ended.");
+                }
                 userCommandInput.value = '';
             }
         });
